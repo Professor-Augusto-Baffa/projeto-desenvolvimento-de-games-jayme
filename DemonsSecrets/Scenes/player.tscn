@@ -1,0 +1,551 @@
+[gd_scene load_steps=12 format=3 uid="uid://boh5kbnp1kstl"]
+
+[ext_resource type="Texture2D" uid="uid://du6b7710fkgr8" path="res://Assets/Martial Hero/Idle.png" id="1_o2gxx"]
+[ext_resource type="Texture2D" uid="uid://dthjub4sy4iod" path="res://Assets/Martial Hero/Run.png" id="2_wsyc1"]
+[ext_resource type="Texture2D" uid="uid://bq55rj7ejoo0r" path="res://Assets/Martial Hero/Jump.png" id="3_o17y4"]
+[ext_resource type="Texture2D" uid="uid://iay18upqxnng" path="res://Assets/Martial Hero/Fall.png" id="4_fkyko"]
+
+[sub_resource type="GDScript" id="GDScript_una3c"]
+script/source = "extends CharacterBody2D
+
+@onready var polygon = $CollisionPolygon2D
+@onready var animation = $AnimationPlayer
+@onready var all_sprites = $sprites
+@onready var bottomRay = $bottomRay
+@onready var rightRay = $rightMoveRay
+
+const SPEED = 275.0
+const JUMP_VELOCITY = -400.0
+# Get the gravity from the project settings to be synced with RigidBody nodes.
+var gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
+var direction = 0
+
+func turnVisible(name):
+	for node in all_sprites.get_children():
+		if node.name == name:
+			node.show()
+		else:
+			node.hide()
+
+func flip_colision(direction):
+	var sign_d = sign(direction)
+	if sign_d == 0:
+		return
+	polygon.scale.x = sign_d * abs(polygon.scale.x)
+	rightRay.scale.x = sign_d * abs(rightRay.scale.x)
+	
+
+func notOffScreen():
+	var dots = polygon.polygon
+	var x_neg = 0
+	var x_pos = 0
+	var view = get_viewport().get_visible_rect().size
+	for dot in dots:
+		if dot.x > x_pos:
+			x_pos = dot.x
+		if dot.x < x_neg:
+			x_neg = dot.x
+	if position.x + x_pos >= view.x:
+		position.x = view.x - x_pos
+		if velocity.x > 0:
+			velocity.x = 0
+	if position.x + x_neg <= 0:
+		position.x = 0 - x_neg
+		if velocity.x < 0:
+			velocity.x = 0
+			
+func stop_on_frontier():
+	var sign_d = sign(direction)
+	var sign_v = sign(velocity.x)
+	if sign_d == 0:
+		return
+	elif  sign_d*sign_v == 1 and rightRay.is_colliding():
+		velocity.x = 0
+
+func _physics_process(delta):
+	if direction < 0 :
+		for sprite in all_sprites.get_children():
+			sprite.flip_h = true
+	elif direction > 0:
+		for sprite in all_sprites.get_children():
+			sprite.flip_h = false
+	flip_colision(direction)
+	
+	# Add the gravity.
+	if not is_on_floor():
+		velocity.y += gravity * delta
+	
+	# Handle jump.
+	if Input.is_action_just_pressed(\"ui_jump\") and is_on_floor():
+		velocity.y = JUMP_VELOCITY
+
+	# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	direction = Input.get_axis(\"ui_left\", \"ui_right\")
+	if direction:
+		velocity.x = direction * SPEED
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+	
+	notOffScreen()
+	stop_on_frontier()
+	
+	if is_on_floor():
+		if velocity.x != 0:
+			if animation.current_animation != \"run\":
+				animation.play(\"run\")
+				turnVisible(\"run\")
+		else:
+			if animation.current_animation != \"idle\":
+				animation.play(\"idle\")
+				turnVisible(\"idle\")	
+	else:
+		if velocity.y < 0:
+			if animation.current_animation != \"jump_up\" and not bottomRay.is_colliding():
+				animation.play(\"jump_up\")
+				turnVisible(\"jump\")
+		elif velocity.y > 0:
+			if animation.current_animation != \"jump_down\" and not bottomRay.is_colliding():
+				animation.play(\"jump_down\")
+				turnVisible(\"fall\")
+	
+	move_and_slide()
+
+
+
+
+	
+"
+
+[sub_resource type="Animation" id="Animation_kvc6f"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("sprites/idle:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("sprites/fall:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("sprites/fall:hframes")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [2]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("sprites/fall:texture")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [ExtResource("4_fkyko")]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("sprites/jump:frame")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("sprites/jump:hframes")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [2]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("sprites/jump:texture")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [ExtResource("3_o17y4")]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("sprites/run:frame")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("sprites/run:texture")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [ExtResource("2_wsyc1")]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("sprites/run:hframes")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [8]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("sprites/idle:hframes")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [8]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("sprites/idle:texture")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [ExtResource("1_o2gxx")]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("CollisionPolygon2D:polygon")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [PackedVector2Array(-2, -13, 0, -16, 4, -16, 4, -11, 7, -7, 7, -2, 5, -1, 9, 5, 9, 16, -10, 16, -4, 0, -10, -4)]
+}
+
+[sub_resource type="Animation" id="Animation_erpe1"]
+resource_name = "idle"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("sprites/idle:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 7]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("sprites/idle:hframes")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.8),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [8, 8]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("sprites/idle:texture")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.8),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [ExtResource("1_o2gxx"), ExtResource("1_o2gxx")]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("CollisionPolygon2D:polygon")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [PackedVector2Array(-2, -13, 0, -16, 4, -16, 4, -11, 7, -7, 7, -2, 5, -1, 9, 5, 9, 16, -10, 16, -4, 0, -10, -4), PackedVector2Array(-3, -12, 0, -14, 3, -13, 4, -11, 7, -7, 7, -2, 5, -1, 9, 5, 9, 16, -10, 16, -4, 0, -10, -4), PackedVector2Array(-6, -9, -1, -11, 1, -14, 4, -11, 7, -7, 7, -2, 5, 1, 8, 6, 9, 16, -10, 16, -5, 1, -10, -4), PackedVector2Array(-6, -9, -1, -10, 1, -14, 3, -9, 7, -7, 7, 0, 5, 1, 9, 6, 9, 16, -9, 16, -5, 2, -10, -2), PackedVector2Array(-6, -9, -1, -11, 1, -14, 3, -9, 6, -8, 7, 0, 5, 1, 9, 6, 9, 16, -9, 16, -5, 2, -10, -2), PackedVector2Array(-7, -9, -1, -12, 1, -14, 3, -10, 6, -8, 7, 0, 5, 1, 9, 6, 9, 16, -9, 16, -5, 2, -10, -2), PackedVector2Array(-7, -10, -1, -12, 1, -14, 4, -10, 6, -8, 7, 0, 5, 1, 9, 6, 9, 16, -9, 16, -5, 2, -10, -2), PackedVector2Array(-7, -10, -1, -12, 1, -14, 4, -10, 6, -8, 7, 0, 5, 1, 9, 6, 9, 16, -9, 16, -5, 2, -10, -2)]
+}
+
+[sub_resource type="Animation" id="Animation_xc8sp"]
+resource_name = "jump_down"
+length = 0.6
+loop_mode = 1
+step = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("sprites/fall:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [0, 1, 1]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("sprites/fall:hframes")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.6),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [2, 2]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("sprites/fall:texture")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.6),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [ExtResource("4_fkyko"), ExtResource("4_fkyko")]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("CollisionPolygon2D:polygon")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [PackedVector2Array(-4, -9, 1, -12, 3, -13, 5, -12, 7, -9, 12, -2, 9, 6, 6, 16, 2, 16, -3, 7, -3, 1, -10, -7), PackedVector2Array(-4, -9, 1, -12, 3, -13, 5, -12, 7, -9, 12, -2, 9, 6, 6, 16, 2, 16, -3, 7, -3, 1, -10, -7), PackedVector2Array(-4, -9, 1, -12, 3, -13, 5, -12, 7, -9, 12, -2, 9, 6, 6, 16, 2, 16, -3, 7, -3, 1, -10, -7)]
+}
+
+[sub_resource type="Animation" id="Animation_hcf1f"]
+resource_name = "jump_up"
+length = 0.6
+loop_mode = 1
+step = 0.3
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("sprites/jump:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [0, 1, 1]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("sprites/jump:hframes")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.6),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [2, 2]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("sprites/jump:texture")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.6),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [ExtResource("3_o17y4"), ExtResource("3_o17y4")]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("CollisionPolygon2D:polygon")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [PackedVector2Array(-3, -9, 1, -12, 3, -16, 5, -12, 10, -7, 4, 0, 7, 2, 3, 16, -6, 16, -6, 8, -3, -2, -6, -6), PackedVector2Array(-3, -9, 1, -12, 3, -16, 5, -12, 10, -7, 4, 0, 7, 2, 3, 16, -6, 16, -6, 8, -3, -2, -6, -6), PackedVector2Array(-3, -9, 1, -12, 3, -16, 5, -12, 10, -7, 4, 0, 7, 2, 3, 16, -6, 16, -6, 8, -3, -2, -6, -6)]
+}
+
+[sub_resource type="Animation" id="Animation_5c7n3"]
+resource_name = "run"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("sprites/run:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 7]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("sprites/run:texture")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.8),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [ExtResource("2_wsyc1"), ExtResource("2_wsyc1")]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("sprites/run:hframes")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.8),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [8, 8]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("CollisionPolygon2D:polygon")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -3, 3, 1, 7, 7, 9, 16, -1, 16, -6, 8, -3, -1, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -1, 3, 1, 5, 7, 5, 16, -1, 16, -5, 7, -3, -1, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -1, 3, 1, 7, 8, 3, 16, -5, 16, -5, 7, -3, -1, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -2, 4, 0, 8, 7, -2, 16, -8, 12, -5, 7, -4, 0, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -2, 3, 1, 9, 13, -2, 16, -9, 8, -7, 6, -4, 0, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -2, 3, 1, 6, 16, -2, 16, -6, 10, -7, 6, -4, 0, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 7, -8, 9, -2, 4, 0, 4, 16, -4, 16, -6, 10, -5, 7, -4, -2, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 9, -3, 3, 1, 6, 10, 1, 16, -4, 16, -8, 10, -5, 7, -4, -2, -6, -4), PackedVector2Array(-3, -9, 3, -10, 5, -12, 9, -3, 3, 1, 9, 10, 9, 16, -1, 16, -4, 11, -5, 7, -4, -2, -6, -4)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_c8axy"]
+_data = {
+"RESET": SubResource("Animation_kvc6f"),
+"idle": SubResource("Animation_erpe1"),
+"jump_down": SubResource("Animation_xc8sp"),
+"jump_up": SubResource("Animation_hcf1f"),
+"run": SubResource("Animation_5c7n3")
+}
+
+[node name="Player" type="CharacterBody2D"]
+script = SubResource("GDScript_una3c")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(2.5, 2.5)
+limit_left = 0
+limit_right = 1920
+limit_bottom = 1080
+
+[node name="sprites" type="Sprite2D" parent="."]
+
+[node name="idle" type="Sprite2D" parent="sprites"]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("1_o2gxx")
+hframes = 8
+
+[node name="run" type="Sprite2D" parent="sprites"]
+visible = false
+position = Vector2(1.33514e-06, 0)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("2_wsyc1")
+hframes = 8
+
+[node name="jump" type="Sprite2D" parent="sprites"]
+visible = false
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("3_o17y4")
+hframes = 2
+
+[node name="fall" type="Sprite2D" parent="sprites"]
+visible = false
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("4_fkyko")
+hframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_c8axy")
+}
+autoplay = "idle"
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(-2, -13, 0, -16, 4, -16, 4, -11, 7, -7, 7, -2, 5, -1, 9, 5, 9, 16, -10, 16, -4, 0, -10, -4)
+
+[node name="bottomRay" type="RayCast2D" parent="."]
+target_position = Vector2(0, 35)
+collide_with_areas = true
+
+[node name="rightMoveRay" type="RayCast2D" parent="."]
+target_position = Vector2(12, 0)
