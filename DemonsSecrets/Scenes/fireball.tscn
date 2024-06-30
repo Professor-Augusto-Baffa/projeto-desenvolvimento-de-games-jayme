@@ -24,8 +24,8 @@ particle_flag_disable_z = true
 emission_shape = 1
 emission_sphere_radius = 6.0
 gravity = Vector3(0, 0, 0)
-radial_accel_min = -40.0
-radial_accel_max = -30.0
+radial_accel_min = -80.0
+radial_accel_max = -60.0
 scale_min = 2.0
 scale_max = 2.0
 scale_curve = SubResource("CurveTexture_qxrxv")
@@ -38,7 +38,7 @@ script = ExtResource("1_gau74")
 shape = SubResource("CircleShape2D_anmkk")
 
 [node name="center" type="GPUParticles2D" parent="."]
-amount = 1000
+amount = 2000
 process_material = SubResource("ParticleProcessMaterial_oii0n")
 visibility_rect = Rect2(-960, -540, 1920, 1080)
 

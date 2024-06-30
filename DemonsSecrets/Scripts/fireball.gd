@@ -30,8 +30,8 @@ func _on_body_entered(body):
 
 func _physics_process(delta):
 	velocity += force*delta
-	velocity.x = clamp(velocity.x,-200,200)
-	velocity.y = clamp(velocity.y,-200,200)
+	velocity.x = clamp(velocity.x,-400,400)
+	velocity.y = clamp(velocity.y,-400,400)
 	position += velocity*delta
 	if position.x >= view.x or position.x <= 0:
 		iniExp()

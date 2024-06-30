@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://ceoyow57aro8d"]
+[gd_scene load_steps=14 format=3 uid="uid://ceoyow57aro8d"]
 
 [ext_resource type="Texture2D" uid="uid://coivmx5flqfwd" path="res://Assets/Background/background_layer_1.png" id="1_7u8dq"]
 [ext_resource type="Texture2D" uid="uid://coddrg1jjpymh" path="res://Assets/Background/background_layer_2.png" id="2_if3hh"]
@@ -495,6 +495,12 @@ tile_size = Vector2i(24, 24)
 physics_layer_0/collision_layer = 1
 sources/1 = SubResource("TileSetAtlasSource_kb4tq")
 
+[sub_resource type="Gradient" id="Gradient_b6kjj"]
+colors = PackedColorArray(2.35841e-06, 0, 0.685646, 1, 0.379009, 0.572699, 1, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_xqa5o"]
+gradient = SubResource("Gradient_b6kjj")
+
 [sub_resource type="Curve" id="Curve_54imx"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.428571), 0.0, 0.0, 0, 0]
 point_count = 2
@@ -508,7 +514,7 @@ emission_shape = 3
 emission_box_extents = Vector3(1920, 1, 1)
 gravity = Vector3(-20, 40, 0)
 scale_curve = SubResource("CurveTexture_60e4s")
-color = Color(0.921569, 0.94902, 1, 1)
+color_ramp = SubResource("GradientTexture1D_xqa5o")
 collision_mode = 2
 collision_use_scale = true
 
@@ -598,7 +604,7 @@ layer_0/tile_data = PackedInt32Array(2818048, 655361, 4, 2883584, 655361, 4, 281
 
 [node name="rain" type="GPUParticles2D" parent="."]
 position = Vector2(960, 0)
-amount = 2000
+amount = 20000
 process_material = SubResource("ParticleProcessMaterial_ulyrg")
 lifetime = 10.0
 randomness = 1.0

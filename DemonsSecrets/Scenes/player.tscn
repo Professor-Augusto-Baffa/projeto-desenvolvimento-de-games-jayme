@@ -96,7 +96,7 @@ func _physics_process(delta):
 	if Input.is_action_just_pressed(\"power\"):
 		var vaiAborto = FIREBALL.instantiate()
 		game.add_child(vaiAborto)
-		vaiAborto.initiate(200*flip, 0, position.x, position.y, $\".\")
+		vaiAborto.initiate(400*flip, 0, position.x, position.y, $\".\")
 	
 	notOffScreen()
 	stop_on_frontier()
